@@ -1,0 +1,27 @@
+{
+  "name": "sandboxed-module-loader",
+  "version": "1.0.0",
+  "description": "Sandbox loading of modules. Useful in unit testing to give each test an unique copy of each dependency.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johanblumenberg/sandboxed-module-loader.git"
+  },
+  "author": "johan.blumenberg@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/johanblumenberg/sandboxed-module-loader/issues"
+  },
+  "homepage": "https://github.com/johanblumenberg/sandboxed-module-loader#readme",
+  "devDependencies": {
+    "@types/expect": "^1.20.2",
+    "@types/mocha": "^2.2.48",
+    "expect": "^22.1.0",
+    "is-positive": "^3.1.0",
+    "mocha": "^5.0.0"
+  },
+  "dependencies": {}
+}
