@@ -57,6 +57,11 @@ describe('Loading modules', () => {
             const child = require('sandboxed-module-loader-test/child');
             expect(start.a.external.child).not.toBe(child);
         });
+
+        it('should keep cache for later calls to require', () => {
+            const start = require('./modules/starting-point');
+            expect(start.a.common).toBe(start.a.getCommon());
+        });
     });
 
     describe('Sandbox local modules', () => {
