@@ -24,7 +24,7 @@ function loader(sandboxModule, options) {
     function getFullPath(request, parent) {
         if (/^\.{1,2}/.test(request)) {
             return Module._resolveFilename(path.join(path.dirname(parent.filename), request));
-        } else if (options.sandboxExternal) {
+        } else {
             return require.resolve(request);
         }
     }
@@ -50,7 +50,7 @@ function loader(sandboxModule, options) {
                 
         const fullPath = getFullPath(request, parent);
         const sandboxCache = parent.__sandbox_cache || extraArgs().cache;
-        const external = parent.__sandbox_external || extraArgs().external || !/^\.{1,2}/.test(request);
+        const external = parent.__sandbox_external || extraArgs().external || !/^\.{1,2}|^\//.test(request);
         
         if (sandboxCache) {
             if (sandboxCache[fullPath]) {

@@ -92,5 +92,11 @@ describe('Loading modules', () => {
             const child = require('sandboxed-module-loader-test/child');
             expect(start.a.external.child).toBe(child);
         });
+
+        it('should keep absolute path files in local sandbox', () => {
+            const start = require('./modules/starting-point');
+            expect(start.a.common).toBe(start.a.getAbsoluteCommon());
+            expect(start.b.common).not.toBe(start.a.getAbsoluteCommon());
+        });
     });
 });

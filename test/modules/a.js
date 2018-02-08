@@ -5,6 +5,10 @@ function getCommon() {
     return require('./common');
 }
 
+function getAbsoluteCommon() {
+    return require(__dirname + '/common');
+}
+
 module.exports = {
-    common, external, getCommon
+    common, external, getCommon, getAbsoluteCommon
 };
