@@ -37,11 +37,12 @@ function loader(sandboxModule, options) {
         }
     }
 
+    let sandboxId = 0;
     let loadStack = [ { cache: undefined, external: false } ];
 
-    function callLoad(_this, fn, args, cache, external) {
+    function callLoad(_this, fn, args, sandbox, external) {
         loadStack.unshift({
-            cache, external
+            sandbox, external
         });
         const module = fn.apply(_this, args);
         loadStack.shift();
@@ -57,46 +58,48 @@ function loader(sandboxModule, options) {
         verbose('_load()', request, 'from', parent.filename);
                 
         const fullPath = getFullPath(request, parent);
-        const sandboxCache = parent.__sandbox_cache || extraArgs().cache;
+        const sandbox = parent.__sandbox || extraArgs().sandbox;
         const external = parent.__sandbox_external || extraArgs().external || !/^\.{1,2}|^\//.test(request);
         
-        if (sandboxCache) {
-            if (sandboxCache[fullPath]) {
-                return sandboxCache[fullPath];
+        if (sandbox) {
+            if (sandbox[fullPath]) {
+                verbose('Returning from sandbox[' + sandbox.__id + ']', request);
+                return sandbox[fullPath].exports;
             } else if (!external || options.sandboxExternal) {
-                verbose('Recording', external ? 'external' : 'local', request);
+                verbose('Caching in sandbox[' + sandbox.__id + ']', external ? 'external' : 'local', request);
 
-                const module = callLoad(this, originalLoad, arguments, sandboxCache, external);
+                const exports = callLoad(this, originalLoad, arguments, sandbox, external);
+                const module = require.cache[fullPath];
 
-                if (require.cache[fullPath]) {
-                    sandboxCache[fullPath] = module;
-                    Object.defineProperty(require.cache[fullPath], '__sandbox_cache', {
+                if (module) {
+                    sandbox[fullPath] = module;
+                    delete require.cache[fullPath];
+
+                    Object.defineProperty(module, '__sandbox', {
                         configurable: true,
-                        value: sandboxCache
+                        value: sandbox
                     });
-                    Object.defineProperty(require.cache[fullPath], '__sandbox_external', {
+                    Object.defineProperty(module, '__sandbox_external', {
                         configurable: true,
                         value: external
                     });
                 }
-                                
-                return module;
+
+                return exports;
             } else {
                 return callLoad(this, originalLoad, arguments, undefined, external);
             }
         } else if (parent.filename.match(sandboxModule)) {
-            info('Start sandbox for', request);
-            
-            const sandboxCache = {};
-            const module = callLoad(this, Module._load, arguments, sandboxCache, external);
-            
-            info('End sandbox for', request);
-            for (let fullPath in sandboxCache) {
-                verbose('Clear', fullPath);
-                delete require.cache[fullPath];
-            }
+            const id = ++sandboxId;
 
-            return module;
+            info('Create sandbox[' + id + '] for', request);
+            
+            const sandbox = {};
+            Object.defineProperty(sandbox, '__id', {
+                value: id
+            });
+
+            return callLoad(this, Module._load, arguments, sandbox, external);
         } else {
             return originalLoad.apply(this, arguments);
         }
