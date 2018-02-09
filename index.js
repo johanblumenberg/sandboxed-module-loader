@@ -69,21 +69,19 @@ function loader(sandboxModule, options) {
                 verbose('Caching in sandbox[' + sandbox.__id + ']', external ? 'external' : 'local', request);
 
                 const exports = callLoad(this, originalLoad, arguments, sandbox, external);
-                const module = require.cache[fullPath];
+                const module = require.cache[fullPath] || { external };
 
-                if (module) {
-                    sandbox[fullPath] = module;
-                    delete require.cache[fullPath];
+                sandbox[fullPath] = module;
+                delete require.cache[fullPath];
 
-                    Object.defineProperty(module, '__sandbox', {
-                        configurable: true,
-                        value: sandbox
-                    });
-                    Object.defineProperty(module, '__sandbox_external', {
-                        configurable: true,
-                        value: external
-                    });
-                }
+                Object.defineProperty(module, '__sandbox', {
+                    configurable: true,
+                    value: sandbox
+                });
+                Object.defineProperty(module, '__sandbox_external', {
+                    configurable: true,
+                    value: external
+                });
 
                 return exports;
             } else {
