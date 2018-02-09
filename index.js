@@ -69,7 +69,7 @@ function loader(sandboxModule, options) {
                 verbose('Caching in sandbox[' + sandbox.__id + ']', external ? 'external' : 'local', request);
 
                 const exports = callLoad(this, originalLoad, arguments, sandbox, external);
-                const module = require.cache[fullPath] || { external };
+                const module = require.cache[fullPath] || { exports };
 
                 sandbox[fullPath] = module;
                 delete require.cache[fullPath];
