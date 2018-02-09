@@ -21,11 +21,19 @@ function loader(sandboxModule, options) {
         }
     }
 
+    function getPaths(module) {
+        if (module) {
+            return module.paths || getPaths(module.parent);
+        }
+    }
+
     function getFullPath(request, parent) {
         if (/^\.{1,2}/.test(request)) {
             return Module._resolveFilename(path.join(path.dirname(parent.filename), request));
         } else {
-            return require.resolve(request);
+            return require.resolve(request, {
+                paths: getPaths(parent)
+            });
         }
     }
 
@@ -60,16 +68,18 @@ function loader(sandboxModule, options) {
 
                 const module = callLoad(this, originalLoad, arguments, sandboxCache, external);
 
-                sandboxCache[fullPath] = module;
-                Object.defineProperty(require.cache[fullPath], '__sandbox_cache', {
-                    configurable: true,
-                    value: sandboxCache
-                });
-                Object.defineProperty(require.cache[fullPath], '__sandbox_external', {
-                    configurable: true,
-                    value: external
-                });
-                
+                if (require.cache[fullPath]) {
+                    sandboxCache[fullPath] = module;
+                    Object.defineProperty(require.cache[fullPath], '__sandbox_cache', {
+                        configurable: true,
+                        value: sandboxCache
+                    });
+                    Object.defineProperty(require.cache[fullPath], '__sandbox_external', {
+                        configurable: true,
+                        value: external
+                    });
+                }
+                                
                 return module;
             } else {
                 return callLoad(this, originalLoad, arguments, undefined, external);

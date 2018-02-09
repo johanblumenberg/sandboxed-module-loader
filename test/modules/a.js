@@ -1,5 +1,6 @@
 const common = require('./common');
-const external = require('sandboxed-module-loader-test');
+const package = require('sandboxed-module-loader-test');
+const external = require('is-positive');
 
 function getCommon() {
     return require('./common');
@@ -10,5 +11,5 @@ function getAbsoluteCommon() {
 }
 
 module.exports = {
-    common, external, getCommon, getAbsoluteCommon
+    common, package, external, getCommon, getAbsoluteCommon
 };

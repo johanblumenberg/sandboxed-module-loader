@@ -49,18 +49,23 @@ describe('Loading modules', () => {
 
         it('should clear external modules', () => {
             const start = require('./modules/starting-point');
-            expect(start.a.external).not.toBe(start.b.external);
+            expect(start.a.package).not.toBe(start.b.external);
         });
 
         it('should clear local modules within external modules', () => {
             const start = require('./modules/starting-point');
             const child = require('sandboxed-module-loader-test/child');
-            expect(start.a.external.child).not.toBe(child);
+            expect(start.a.package.child).not.toBe(child);
         });
 
         it('should keep cache for later calls to require', () => {
             const start = require('./modules/starting-point');
             expect(start.a.common).toBe(start.a.getCommon());
+        });
+
+        it('should load nested modules', () => {
+            const start = require('./modules/starting-point');
+            expect(start.a.package.external).not.toBe(start.a.external)
         });
     });
 
@@ -84,19 +89,24 @@ describe('Loading modules', () => {
 
         it('should not clear external modules', () => {
             const start = require('./modules/starting-point');
-            expect(start.a.external).toBe(start.b.external);
+            expect(start.a.package).toBe(start.b.package);
         });
 
         it('should not clear local modules within external modules', () => {
             const start = require('./modules/starting-point');
             const child = require('sandboxed-module-loader-test/child');
-            expect(start.a.external.child).toBe(child);
+            expect(start.a.package.child).toBe(child);
         });
 
         it('should keep absolute path files in local sandbox', () => {
             const start = require('./modules/starting-point');
             expect(start.a.common).toBe(start.a.getAbsoluteCommon());
             expect(start.b.common).not.toBe(start.a.getAbsoluteCommon());
+        });
+
+        it('should load nested modules', () => {
+            const start = require('./modules/starting-point');
+            expect(start.a.package.external).not.toBe(start.a.external)
         });
     });
 });

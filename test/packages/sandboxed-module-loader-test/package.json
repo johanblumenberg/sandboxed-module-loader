@@ -1,11 +1,14 @@
 {
   "name": "sandboxed-module-loader-test",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Test package for sandboxed-module-loader",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "johan.blumenberg@gmail.com",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "is-positive": "2.0.0"
+  }
 }
