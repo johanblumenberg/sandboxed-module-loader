@@ -1,6 +1,6 @@
 {
   "name": "sandboxed-module-loader",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Sandbox loading of modules. Useful in unit testing to give each test an unique copy of each dependency.",
   "main": "index.js",
   "scripts": {
