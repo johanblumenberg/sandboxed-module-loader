@@ -40,11 +40,32 @@ function loader(sandboxModule, options) {
     let sandboxId = 0;
     let loadStack = [ { cache: undefined, external: false } ];
 
-    function callLoad(_this, fn, args, sandbox, external) {
+    function createSandbox() {
+        function FakeModulePrototype () {}
+        FakeModulePrototype.prototype = Module.prototype;
+        function FakeModule () {}
+        FakeModule.prototype = new FakeModulePrototype();
+        Object.keys(Module).forEach(key => FakeModule[key] = Module[key]);
+        FakeModule._load = originalLoad;
+
+        return {
+            id: ++sandboxId,
+            cache: { 
+                'module': { exports: FakeModule }
+            },
+            Module: FakeModule
+        };    
+    }
+    
+    function callLoad(_this, m, args, sandbox, external) {
         loadStack.unshift({
             sandbox, external
         });
-        const module = fn.apply(_this, args);
+        const originalCompile = Module.prototype._compile;
+        Module.prototype._compile = m.prototype._compile;
+        const module = m._load.apply(_this, args);
+        Module.prototype._compile = originalCompile;
+
         loadStack.shift();
         return module;
     }
@@ -62,16 +83,18 @@ function loader(sandboxModule, options) {
         const external = parent.__sandbox_external || extraArgs().external || !/^\.{1,2}|^\//.test(request);
         
         if (sandbox) {
-            if (sandbox[fullPath]) {
-                verbose('Returning from sandbox[' + sandbox.__id + ']', request);
-                return sandbox[fullPath].exports;
+            if (sandbox.cache[fullPath]) {
+                verbose('Returning from sandbox[' + sandbox.id + ']', request);
+                return sandbox.cache[fullPath].exports;
+            } else if (require.cache[fullPath]) {
+                return require.cache[fullPath].exports;
             } else if (!external || options.sandboxExternal) {
-                verbose('Caching in sandbox[' + sandbox.__id + ']', external ? 'external' : 'local', request);
-
-                const exports = callLoad(this, originalLoad, arguments, sandbox, external);
+                const exports = callLoad(this, sandbox.Module, arguments, sandbox, external);
                 const module = require.cache[fullPath] || { exports };
 
-                sandbox[fullPath] = module;
+                verbose('Caching in sandbox[' + sandbox.id + ']', external ? 'external' : 'local', request);
+
+                sandbox.cache[fullPath] = module;
                 delete require.cache[fullPath];
 
                 Object.defineProperty(module, '__sandbox', {
@@ -85,19 +108,13 @@ function loader(sandboxModule, options) {
 
                 return exports;
             } else {
-                return callLoad(this, originalLoad, arguments, undefined, external);
+                return callLoad(this, sandbox.Module, arguments, undefined, external);
             }
         } else if (parent.filename.match(sandboxModule)) {
-            const id = ++sandboxId;
+            const sandbox = createSandbox();
+            info('Create sandbox[' + sandbox.id + '] for', request);
 
-            info('Create sandbox[' + id + '] for', request);
-            
-            const sandbox = {};
-            Object.defineProperty(sandbox, '__id', {
-                value: id
-            });
-
-            return callLoad(this, Module._load, arguments, sandbox, external);
+            return callLoad(this, Module, arguments, sandbox, external);
         } else {
             return originalLoad.apply(this, arguments);
         }

@@ -22,7 +22,8 @@
     "expect": "^22.1.0",
     "is-positive": "3.1.0",
     "mocha": "^5.0.0",
-    "sandboxed-module-loader-test": "1.0.2"
+    "sandboxed-module-loader-test": "1.0.2",
+    "ts-mockito": "^2.2.9"
   },
   "dependencies": {}
 }

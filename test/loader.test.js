@@ -2,6 +2,7 @@ const expect = require('expect');
 const path = require('path');
 const loader = require('..');
 const Module = require('module');
+const { mock, instance, verify, anything } = require('ts-mockito');
 
 describe('Loading modules', () => {
 
@@ -107,6 +108,65 @@ describe('Loading modules', () => {
         it('should load nested modules', () => {
             const start = require('./modules/starting-point');
             expect(start.a.package.external).not.toBe(start.a.external)
+        });
+    });
+
+    describe('Module functions', () => {
+        beforeEach(() => {
+            loader(/\/modules\/starting-point.js$/, {
+                verbose: 2,
+                sandboxExternal: true
+            });
+        });
+
+        afterEach(() => {
+            loader.reset();
+        });
+
+        it('should have different _compile functions in each sandbox', () => {
+            const start = require('./modules/starting-point');
+            const a = start.a.getMock();
+            const b = start.b.getMock();
+
+            verify(a._compile(anything(), __dirname + '/modules/common.js')).times(1);
+            verify(b._compile(anything(), __dirname + '/modules/common.js')).times(1);
+        });
+
+        it('should have different _load functions in each sandbox', () => {
+            const start = require('./modules/starting-point');
+            const a = start.a.getMock();
+            const b = start.b.getMock();
+
+            verify(a._load('./common', anything())).times(1);
+            verify(b._load('./common', anything())).times(1);
+        });
+
+        it('should have different _compile functions in each sandbox for async loading', () => {
+            const start = require('./modules/starting-point');
+            const a = start.a.getMock();
+            const b = start.b.getMock();
+
+            start.a.getOther();
+            verify(a._compile(anything(), __dirname + '/modules/other.js')).times(1);
+            verify(b._compile(anything(), __dirname + '/modules/other.js')).times(0);
+
+            start.b.getOther();
+            verify(a._compile(anything(), __dirname + '/modules/other.js')).times(1);
+            verify(b._compile(anything(), __dirname + '/modules/other.js')).times(1);
+        });
+
+        it('should have different _load functions in each sandbox for async loading', () => {
+            const start = require('./modules/starting-point');
+            const a = start.a.getMock();
+            const b = start.b.getMock();
+
+            start.a.getOther();
+            verify(a._load('./other', anything())).times(1);
+            verify(b._load('./other', anything())).times(0);
+
+            start.b.getOther();
+            verify(a._load('./other', anything())).times(1);
+            verify(b._load('./other', anything())).times(1);
         });
     });
 });
